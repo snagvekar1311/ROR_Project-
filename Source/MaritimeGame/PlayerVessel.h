@@ -1,0 +1,86 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Vessel.h"
+#include "RadarComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "PlayerVessel.generated.h"
+
+UENUM(BlueprintType)
+enum class EVesselLength : uint8 {
+    Under50m UMETA(DisplayName = "Under 50m"),
+    Over50m  UMETA(DisplayName = "Over 50m")
+};
+
+USTRUCT(BlueprintType)
+struct FManeuveringCharacteristics {
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float MaxSpeed;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float TurningRate;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Acceleration;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Displacement;
+
+    FManeuveringCharacteristics()
+        : MaxSpeed(0.0f), TurningRate(0.0f), Acceleration(0.0f), Displacement(0.0f) {
+    }
+
+    FManeuveringCharacteristics(float InMaxSpeed, float InTurningRate, float InAcceleration, float InDisplacement)
+        : MaxSpeed(InMaxSpeed), TurningRate(InTurningRate), Acceleration(InAcceleration), Displacement(InDisplacement) {
+    }
+};
+
+UCLASS()
+class MARITIMEGAME_API APlayerVessel : public AVessel {
+    GENERATED_BODY()
+
+public:
+    APlayerVessel();
+
+protected:
+    virtual void BeginPlay() override;
+
+public:
+    virtual void Tick(float DeltaTime) override;
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+    void SetTelegraph(float Value);
+    void SetRudder(float Value);
+    void AdjustBearing(float Value);
+    void ToggleRadar();
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vessel")
+    EVesselType PlayerVesselType = EVesselType::Unknown;
+
+private:
+    // Movement
+    float TelegraphSetting;
+    float RudderAngle;
+    float Speed;
+    float LastSpeed;
+    float LastRudder;
+
+    // Vessel length category
+    EVesselLength VesselLength;
+
+    // Maneuvering data
+    UPROPERTY()
+    FManeuveringCharacteristics Maneuvering;
+
+    // Radar
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Radar", meta = (AllowPrivateAccess = "true"))
+    URadarComponent* RadarComponent;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Radar", meta = (AllowPrivateAccess = "true"))
+    TSubclassOf<UUserWidget> RadarWidgetClass;
+
+    UPROPERTY()
+    UUserWidget* RadarWidgetInstance;
+};
