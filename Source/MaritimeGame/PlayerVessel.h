@@ -1,9 +1,9 @@
 #pragma once
-
 #include "CoreMinimal.h"
+#include "GameFramework/Pawn.h"
+#include "Widgets/SWeakWidget.h"
+#include "RadarWidget.h"
 #include "Vessel.h"
-#include "RadarComponent.h"
-#include "Blueprint/UserWidget.h"
 #include "PlayerVessel.generated.h"
 
 UENUM(BlueprintType)
@@ -78,9 +78,16 @@ private:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Radar", meta = (AllowPrivateAccess = "true"))
     URadarComponent* RadarComponent;
 
+    // Slate widget for radar display
+    TSharedPtr<SRadarWidget> RadarWidget;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Radar", meta = (AllowPrivateAccess = "true"))
     TSubclassOf<UUserWidget> RadarWidgetClass;
-
-    UPROPERTY()
-    UUserWidget* RadarWidgetInstance;
 };
+// Remove these lines if they exist:
+// UPROPERTY()
+// class UUserWidget* RadarWidgetInstance;
+// TSubclassOf<class UUserWidget> RadarWidgetClass;
+
+// Make sure you have these includes at the top:
+ 

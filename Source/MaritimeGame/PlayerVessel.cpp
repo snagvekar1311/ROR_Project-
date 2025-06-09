@@ -1,7 +1,6 @@
 ﻿#include "PlayerVessel.h"
 #include "RadarComponent.h"
 #include "RadarWidget.h"
-#include "Blueprint/UserWidget.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/Engine.h"
 
@@ -15,11 +14,6 @@ APlayerVessel::APlayerVessel() {
     LastRudder = 0.0f;
 
     RadarComponent = CreateDefaultSubobject<URadarComponent>(TEXT("RadarComponent"));
-
-    static ConstructorHelpers::FClassFinder<UUserWidget> RadarWidgetBPClass(TEXT("/Game/UI/WBP_Radar"));
-    if (RadarWidgetBPClass.Class != nullptr) {
-        RadarWidgetClass = RadarWidgetBPClass.Class;
-    }
 }
 
 void APlayerVessel::BeginPlay() {
@@ -106,31 +100,34 @@ void APlayerVessel::AdjustBearing(float Value) {
     if (RadarComponent && FMath::Abs(Value) > KINDA_SMALL_NUMBER) {
         float NewBearing = RadarComponent->GetMarkedBearing() + Value * 10.0f;
         RadarComponent->MarkBearing(NewBearing);
-        // ✅ Add this log
         UE_LOG(LogTemp, Log, TEXT("AdjustBearing input detected: Value=%.2f | New MarkedBearing: %.2f°"), Value, NewBearing);
-    
-
     }
 }
 
-void APlayerVessel::ToggleRadar() {
+void APlayerVessel::ToggleRadar()
+{
     if (!RadarComponent)
         return;
 
-    if (RadarWidgetInstance && RadarWidgetInstance->IsInViewport()) {
-        RadarWidgetInstance->RemoveFromParent();
-        RadarWidgetInstance = nullptr;
+    if (RadarWidget.IsValid() && GEngine && GEngine->GameViewport)
+    {
+        GEngine->GameViewport->RemoveViewportWidgetContent(RadarWidget.ToSharedRef());
+        RadarWidget.Reset();
     }
-    else if (RadarWidgetClass) {
-        RadarWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), RadarWidgetClass);
+    else
+    {
+        // Create the Slate widget
+        RadarWidget = SNew(SRadarWidget)
+            .RadarComponent(RadarComponent);
 
-        if (RadarWidgetInstance) {
-            URadarWidget* RadarUI = Cast<URadarWidget>(RadarWidgetInstance);
-            if (RadarUI) {
-                RadarUI->SetRadarComponent(RadarComponent);
-            }
-
-            RadarWidgetInstance->AddToViewport();
+        // Add it to the viewport
+        if (GEngine && GEngine->GameViewport)
+        {
+            GEngine->GameViewport->AddViewportWidgetContent(
+                SNew(SWeakWidget)
+                .PossiblyNullContent(RadarWidget.ToSharedRef()),
+                0
+            );
         }
     }
 }
