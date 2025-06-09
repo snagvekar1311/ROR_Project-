@@ -1,10 +1,15 @@
 #pragma once
+
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Widgets/SWeakWidget.h"
-#include "RadarWidget.h"
 #include "Vessel.h"
 #include "PlayerVessel.generated.h"
+
+// Forward declarations
+class URadarComponent;
+class SRadarWidget;
+class SGameHUDWidget;
 
 UENUM(BlueprintType)
 enum class EVesselLength : uint8 {
@@ -59,7 +64,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Vessel")
     EVesselType PlayerVesselType = EVesselType::Unknown;
 
+    void CreateGameHUD();
+    void RemoveGameHUD();
+
+    // Getter for RadarComponent
+    FORCEINLINE URadarComponent* GetRadarComponent() const { return RadarComponent; }
+
 private:
+    // HUD Widget
+    TSharedPtr<SGameHUDWidget> GameHUDWidget;
+
     // Movement
     float TelegraphSetting;
     float RudderAngle;
@@ -84,10 +98,3 @@ private:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Radar", meta = (AllowPrivateAccess = "true"))
     TSubclassOf<UUserWidget> RadarWidgetClass;
 };
-// Remove these lines if they exist:
-// UPROPERTY()
-// class UUserWidget* RadarWidgetInstance;
-// TSubclassOf<class UUserWidget> RadarWidgetClass;
-
-// Make sure you have these includes at the top:
- 

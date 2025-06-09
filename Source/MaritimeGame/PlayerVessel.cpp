@@ -1,6 +1,7 @@
 ﻿#include "PlayerVessel.h"
 #include "RadarComponent.h"
 #include "RadarWidget.h"
+#include "GameHUDWidget.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Engine/Engine.h"
 
@@ -16,7 +17,8 @@ APlayerVessel::APlayerVessel() {
     RadarComponent = CreateDefaultSubobject<URadarComponent>(TEXT("RadarComponent"));
 }
 
-void APlayerVessel::BeginPlay() {
+void APlayerVessel::BeginPlay()
+{
     Super::BeginPlay();
 
     switch (PlayerVesselType) {
@@ -39,13 +41,13 @@ void APlayerVessel::BeginPlay() {
 
     VesselType = EVesselType::PowerDriven;
     VesselLength = EVesselLength::Over50m;
+    CreateGameHUD();
 }
 
 void APlayerVessel::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    PlayerInputComponent->BindAxis("Telegraph", this, &APlayerVessel::SetTelegraph);
-    PlayerInputComponent->BindAxis("Rudder", this, &APlayerVessel::SetRudder);
+    // Only bind the bearing adjustment and radar toggle inputs
     PlayerInputComponent->BindAxis("AdjustBearing", this, &APlayerVessel::AdjustBearing);
     PlayerInputComponent->BindAction("ToggleRadar", IE_Pressed, this, &APlayerVessel::ToggleRadar);
 }
@@ -81,7 +83,7 @@ void APlayerVessel::SetTelegraph(float Value) {
     TelegraphSetting = FMath::Clamp(Value, 0.0f, 1.0f);
 
     if (GEngine && !FMath::IsNearlyEqual(OldValue, TelegraphSetting, 0.01f)) {
-        FString Msg = FString::Printf(TEXT("[W/S] Telegraph set to %.2f"), TelegraphSetting);
+        FString Msg = FString::Printf(TEXT("Telegraph set to %.2f"), TelegraphSetting);
         GEngine->AddOnScreenDebugMessage(2, 1.5f, FColor::Yellow, Msg);
     }
 }
@@ -91,7 +93,7 @@ void APlayerVessel::SetRudder(float Value) {
     RudderAngle = FMath::Clamp(Value * 35.0f, -35.0f, 35.0f);
 
     if (GEngine && !FMath::IsNearlyEqual(OldRudder, RudderAngle, 0.5f)) {
-        FString Msg = FString::Printf(TEXT("[A/D] Rudder set to %.2f°"), RudderAngle);
+        FString Msg = FString::Printf(TEXT("Rudder set to %.2f°"), RudderAngle);
         GEngine->AddOnScreenDebugMessage(3, 1.5f, FColor::Cyan, Msg);
     }
 }
@@ -125,9 +127,31 @@ void APlayerVessel::ToggleRadar()
         {
             GEngine->GameViewport->AddViewportWidgetContent(
                 SNew(SWeakWidget)
-                .PossiblyNullContent(RadarWidget.ToSharedRef()),
+                .PossiblyNullContent(RadarWidget),
                 0
             );
         }
     }
+}
+
+void APlayerVessel::CreateGameHUD()
+{
+    if (GameHUDWidget.IsValid() || !GEngine || !GEngine->GameViewport) return;
+
+    GameHUDWidget = SNew(SGameHUDWidget)
+        .PlayerVessel(this);
+
+    GEngine->GameViewport->AddViewportWidgetContent(
+        SNew(SWeakWidget)
+        .PossiblyNullContent(GameHUDWidget),
+        0
+    );
+}
+
+void APlayerVessel::RemoveGameHUD()
+{
+    if (!GameHUDWidget.IsValid() || !GEngine || !GEngine->GameViewport) return;
+
+    GEngine->GameViewport->RemoveViewportWidgetContent(GameHUDWidget.ToSharedRef());
+    GameHUDWidget.Reset();
 }

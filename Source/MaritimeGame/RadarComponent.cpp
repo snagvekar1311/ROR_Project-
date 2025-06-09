@@ -6,7 +6,9 @@
 
 URadarComponent::URadarComponent() {
     PrimaryComponentTick.bCanEverTick = true;
-    RadarRange = 1111200.0f; // ~6 NM in cm
+    // Default to 24 NM range (standard commercial range)
+    // 1 NM = 185200 cm
+    RadarRange = 185200.0f * 24.0f; // 24 NM in cm
     MarkedBearing = 0.0f;
 }
 
@@ -83,7 +85,7 @@ void URadarComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
             // Show debug message
             if (GEngine) {
-                FString Msg = FString::Printf(TEXT("Blip: %s | %.0f cm | %.1f°"),
+                FString Msg = FString::Printf(TEXT("Blip: %s | %.0f cm | %.1fï¿½"),
                     *OtherVessel->GetName(), Distance, RelativeBearing);
                 GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, Msg);
             }

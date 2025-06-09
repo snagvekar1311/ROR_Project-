@@ -68,7 +68,7 @@ void SRadarWidget::DrawRadarBackground(
         1.0f
     );
 
-    // Draw range rings
+    // Draw range rings with proper scaling
     for (float RingRadius = Radius * 0.25f; RingRadius < Radius; RingRadius += Radius * 0.25f)
     {
         Points.Empty(NumPoints + 1);
@@ -103,7 +103,11 @@ void SRadarWidget::DrawBlips(
 
     for (const FRadarBlip& Blip : RadarComponent->GetRadarBlips())
     {
-        const FVector2D BlipPos = Center + Blip.RadarPosition * (Radius / 200.0f);
+        // Scale the blip position based on the actual radar range
+        const float NormalizedDistance = Blip.Distance / RadarComponent->RadarRange;
+        const float AngleRadUI = FMath::DegreesToRadians(Blip.RelativeBearing);
+        const FVector2D BlipPos = Center + Radius * NormalizedDistance * 
+            FVector2D(FMath::Sin(AngleRadUI), -FMath::Cos(AngleRadUI));
         
         FSlateDrawElement::MakeBox(
             OutDrawElements,
